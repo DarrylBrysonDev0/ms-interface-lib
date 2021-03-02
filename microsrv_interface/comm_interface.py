@@ -417,7 +417,7 @@ class db_CONN:
         # Set sub-select columns to override linked dataframe columns 
         if self._data_tbl is not None:
             # self._subsel_col = col
-            self._data_tbl.reindex(columns=col)
+            self._data_tbl = self._data_tbl.reindex(columns=col)
     def get_df_columns(self) -> list:
         # Get current list of columns to use from linked dataframe
         res = []
