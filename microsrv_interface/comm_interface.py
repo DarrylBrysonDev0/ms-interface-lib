@@ -421,7 +421,7 @@ class db_CONN:
             if self._subsel_col is not None: res = self._subsel_col
             else: res = list(self._data_tbl.columns)
         return res
-    def select_db_table(self, cnt):
+    def select_db_table(self, cnt=100):
         # Norm column list
         self._columns = self.get_df_columns()
         # Build sql select query from paired database table
