@@ -4,7 +4,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="microsrv-interface-darryl.bryson", 
+    name="microsrv_interface_darryl_bryson", 
     version="0.0.1",
     author="Darryl Bryson",
     author_email="Darryl.Bryson@no-reply.com",
