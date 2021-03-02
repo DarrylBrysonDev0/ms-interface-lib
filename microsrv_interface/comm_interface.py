@@ -370,7 +370,7 @@ class db_CONN:
         self._data_tbl = None
         self._db_tbl_name = None
         self._columns = None
-        self._subsel_col = None
+        # self._subsel_col = None
         # Constaints
         self.WRITE_BUFFER_LIMIT = 500
         self.CONFIG_NODE = 'Source_DB'
@@ -416,15 +416,17 @@ class db_CONN:
     def set_subselect_cols(self,col: list) -> None:
         # Set sub-select columns to override linked dataframe columns 
         if self._data_tbl is not None:
-            self._subsel_col = col
+            # self._subsel_col = col
+            self._data_tbl.reindex(columns=col)
     def get_df_columns(self) -> list:
         # Get current list of columns to use from linked dataframe
         res = []
         if self._data_tbl is not None:
-            if self._subsel_col is not None: 
-                res = self._subsel_col
-            else: 
-                res = list(self._data_tbl.columns)
+            res = list(self._data_tbl.columns)
+            # if self._subsel_col is not None: 
+            #     res = self._subsel_col
+            # else: 
+            #     res = list(self._data_tbl.columns)
         return res
     def select_db_table(self, cnt=100):
         # Norm column list
