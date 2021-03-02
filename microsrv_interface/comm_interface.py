@@ -368,6 +368,10 @@ class db_CONN:
         # Parameters
         self.dbConnection = None
         self.configData = None
+        self._data_tbl = None
+        self._db_tbl_name = None
+        self._columns
+        self._subsel_col = None
         # Constaints
         self.WRITE_BUFFER_LIMIT = 500
         self.CONFIG_NODE = 'Source_DB'
@@ -418,8 +422,10 @@ class db_CONN:
         # Get current list of columns to use from linked dataframe
         res = []
         if self._data_tbl is not None:
-            if self._subsel_col is not None: res = self._subsel_col
-            else: res = list(self._data_tbl.columns)
+            if self._subsel_col is not None: 
+                res = self._subsel_col
+            else: 
+                res = list(self._data_tbl.columns)
         return res
     def select_db_table(self, cnt=100):
         # Norm column list
