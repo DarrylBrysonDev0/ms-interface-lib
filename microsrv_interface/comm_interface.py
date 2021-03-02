@@ -356,7 +356,6 @@ class queue_CONN:
             self.publish_message(self.out_channel, self.progress_queue, op_msg)
         return
 
-
 # Class for handling DB calls
 class db_CONN:
     # Constructor
@@ -432,7 +431,7 @@ class db_CONN:
         self._columns = self.get_df_columns()
         # Build sql select query from paired database table
         sel_str = 'SELECT TOP '+ str(cnt) + ' '
-        sel_str += ', '.join(self._columns) + ' '
+        sel_str += ', '.join(('['+self._columns+']')) + ' '
         sel_str += 'FROM ' + self._db_tbl_name
         # Select to dataframe
         df = self.select_query(sel_str,self._columns)
@@ -443,7 +442,7 @@ class db_CONN:
         if self._data_tbl is not None:
             # Build insert query
             ins_str = 'INSERT INTO ' + self._db_tbl_name + ' '
-            ins_str += '(' + ', '.join(self._columns) + ')'
+            ins_str += '(' + ', '.join(('['+self._columns+']')) + ')'
             # Sub-select dataframe
             ins_df = self._data_tbl[self._columns]
             # Write to db
