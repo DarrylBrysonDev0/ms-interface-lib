@@ -370,7 +370,7 @@ class db_CONN:
         self.configData = None
         self._data_tbl = None
         self._db_tbl_name = None
-        self._columns
+        self._columns = None
         self._subsel_col = None
         # Constaints
         self.WRITE_BUFFER_LIMIT = 500
