@@ -448,6 +448,8 @@ class db_CONN:
             ins_str += '(' + ', '.join('[{0}]'.format(c) for c in self._columns) + ')'
             # Sub-select dataframe
             ins_df = self._data_tbl[self._columns]
+            # default all fields to strings
+            ins_df = ins_df.astype('string')
             # Write to db
             wrt_cnt = self.write_dataframe(ins_str, ins_df)
         return wrt_cnt
