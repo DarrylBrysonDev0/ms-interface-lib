@@ -384,17 +384,19 @@ class db_CONN:
     def __exit__(self, type, value, traceback):
         self.close_conn()
         return
+    # Initializers 
     def setup(self) -> pyodbc.Connection:
         self.from_env()
         self.ConnectToDb()
         return self.dbConnection
-    def from_env(self) -> None: #setAllParams(self):
+    def from_env(self) -> None:
         res_dic = {}
         res_dic['ServerAddr']=self.set_env_param('SQL_SERVER_HOST',r'')
         res_dic['DBName']=self.set_env_param('DB_NAME',r'')
         res_dic['UserName']=self.set_env_param('DB_USER',r'')
         res_dic['Password']=self.set_env_param('DB_PASSWORD',r'')
         self.configData = res_dic
+    # Supporting methods
     def to_list(self) -> list:
         res = list(self.configData.values())
         return res
@@ -402,6 +404,46 @@ class db_CONN:
         param = os.getenv(paramName)
         res = defaultStr if not param else param
         return res
+    
+    # Dataframe handlers
+    def set_df(self, df, db_tbl) -> None:
+        self._data_tbl = df
+        self._columns = self.get_df_columns()
+        self._db_tbl_name = db_tbl
+    def set_subselect_cols(self,col: list) -> None:
+        # Set sub-select columns to override linked dataframe columns 
+        if self._data_tbl is not None:
+            self._subsel_col = col
+    def get_df_columns(self) -> list:
+        # Get current list of columns to use from linked dataframe
+        res = []
+        if self._data_tbl is not None:
+            if self._subsel_col is not None: res = self._subsel_col
+            else: res = list(self._data_tbl.columns)
+        return res
+    def select_db_table(self, cnt):
+        # Norm column list
+        self._columns = self.get_df_columns()
+        # Build sql select query from paired database table
+        sel_str = 'SELECT TOP '+ str(cnt) + ' '
+        sel_str += ', '.join(self._columns) + ' '
+        sel_str += 'FROM ' + self._db_tbl_name
+        # Select to dataframe
+        df = self.select_query(sel_str,self._columns)
+        return df 
+    def insert_dataframe(self) -> int:
+        # Norm column list
+        self._columns = self.get_df_columns()
+        if self._data_tbl is not None:
+            # Build insert query
+            ins_str = 'INSERT INTO ' + self._db_tbl_name + ' '
+            ins_str += '(' + ', '.join(self._columns) + ')'
+            # Sub-select dataframe
+            ins_df = self._data_tbl[self._columns]
+            # Write to db
+            wrt_cnt = self.write_dataframe(ins_str, ins_df)
+        return wrt_cnt
+    # Connection managers
     def SetDBConfig(self, configJson):
         if self.IS_VERBOSE: print("Reading config")
         self.configData = configJson[self.CONFIG_NODE]
