@@ -49,12 +49,4 @@ Class wrapper for pika library. Implementation of RabbitMQ interface logic for i
 Class wrapper for pyodbc library. Implementation of ms-sql-server client interface logic for RDBMS access.
 | Class      | Methods                     | Description                                       |
 |------------|-----------------------------|---------------------------------------------------|
-| db_CONN    | set_from_env                | Set parameters from environment variables         |
-|            | get_dir_list                | Get recursive list of files                       |
-|            | open_connection             | Get/Set sftp connection                           |
-|            | close_connection            | Closes sftp connection                            |
-|            | path_exists                 | Check if path exist on sftp server                |
-|            | create_directory            | Recursively create parent directories of a path   |
-|            | download_file               |                                                   |
-|            | upload_file                 |                                                   |
-|            | delete_file                 |                                                   |
+| db_CONN    |                             |                                                   |
