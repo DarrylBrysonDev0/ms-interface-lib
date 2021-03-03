@@ -551,7 +551,15 @@ class db_CONN:
                     if (i >= bufferSize): print("Buffer reached")
                     if (rowCnt >= len(sourceList.index)): print("EOD reached")
                     print("Row index:",rowCnt)
-                cursor.execute(sqlStr)
+                try:
+                    cursor.execute(sqlStr)
+                except Exception as err:
+                    print()
+                    print("An error occurred while inserting records.")
+                    print(str(err))
+                    print()
+                    print(sqlStr)
+                    traceback.print_tb(err.__traceback__)
                 conn.commit()
                 sqlStr = sqlBase
         if self.IS_VERBOSE: print("Results written in:",insertTime.timeElapsed())
