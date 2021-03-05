@@ -254,7 +254,6 @@ class queue_CONN:
     def set_input_function(self, input_func) -> None:
         self._input_func = input_func
         return
-
     # Channel Managment
     ## Named channels
     ### Create channels
@@ -304,10 +303,16 @@ class queue_CONN:
     ## General channels
     ### Publish message to queue
     def publish_message(self, channel, queueName: str, op_msg: str) -> None:
-        # Build in publish limiter
-        channel.basic_publish(exchange='',
-                        routing_key=queueName,
-                        body=op_msg)
+        try:
+            # Build in publish limiter
+            channel.basic_publish(exchange='',
+                            routing_key=queueName,
+                            body=op_msg)
+        except Exception as err:
+            print()
+            print(" [!] Message not published.")
+            print(str(err))
+            traceback.print_tb(err.__traceback__)
         return
     ### Start/Stop consumer
     def start_consuming(self, channel, queueName, func):
@@ -320,12 +325,24 @@ class queue_CONN:
         return
     # Connection State
     def open_Connection(self):
-        connection =  (pika.BlockingConnection(
-                            parameters=pika.ConnectionParameters(self.rbt_srv)))
+        try:
+            connection =  (pika.BlockingConnection(
+                                parameters=pika.ConnectionParameters(self.rbt_srv)))
+        except Exception as err:
+            print()
+            print(" [!] Connection could not be established with queue server: {0}".format(self.rbt_srv))
+            print(str(err))
+            traceback.print_tb(err.__traceback__)
         return connection
     def open_channel(self, connObj):
-        ch = connObj.channel()
-        ch.basic_qos(prefetch_count=1)
+        try:
+            ch = connObj.channel()
+            ch.basic_qos(prefetch_count=1)
+        except Exception as err:
+            print()
+            print(" [!] Channel could not be created.")
+            print(str(err))
+            traceback.print_tb(err.__traceback__)
         return ch
     def close_all_connections(self) -> None:
         self.close_connection(self.in_conn)
