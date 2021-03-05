@@ -325,6 +325,7 @@ class queue_CONN:
         return
     # Connection State
     def open_Connection(self):
+        connection = None
         try:
             connection =  (pika.BlockingConnection(
                                 parameters=pika.ConnectionParameters(self.rbt_srv)))
@@ -335,6 +336,7 @@ class queue_CONN:
             traceback.print_tb(err.__traceback__)
         return connection
     def open_channel(self, connObj):
+        ch = None
         try:
             ch = connObj.channel()
             ch.basic_qos(prefetch_count=1)
