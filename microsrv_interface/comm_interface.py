@@ -379,10 +379,16 @@ class queue_CONN:
         return
     def iter_message_cnt() -> None:
         i = 0
-        if self.message_cnt is not None:
-            i = self.message_cnt
-        i = i + 1
-        self.message_cnt = i
+        try:
+            if self.message_cnt is not None:
+                i = self.message_cnt
+            i = i + 1
+            self.message_cnt = i
+        except Exception as err:
+            print()
+            print(' [!] Error proc iter_message_cnt...')
+            print(str(err))
+            traceback.print_tb(err.__traceback__)
         return
 
 # Class for handling DB calls
