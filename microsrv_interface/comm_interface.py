@@ -378,7 +378,11 @@ class queue_CONN:
             self.publish_message(self.out_channel, self.progress_queue, op_msg)
         return
     def iter_message_cnt() -> None:
-        self.message_cnt+=1
+        i = 0
+        if self.message_cnt is not None:
+            i = self.message_cnt
+        i = i + 1
+        self.message_cnt = i
         return
 
 # Class for handling DB calls
