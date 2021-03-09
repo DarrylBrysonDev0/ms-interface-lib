@@ -377,7 +377,7 @@ class queue_CONN:
         if (self.enable_namespace) and (self.out_channel is not None) and (self.progress_queue is not None):
             self.publish_message(self.out_channel, self.progress_queue, op_msg)
         return
-    def iter_message_cnt() -> None:
+    def iter_message_cnt(self) -> None:
         i = 0
         try:
             if self.message_cnt is not None:
