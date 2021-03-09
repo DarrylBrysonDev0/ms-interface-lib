@@ -203,6 +203,8 @@ class queue_CONN:
         self.enable_namespace = None
         self.pub_limit = None
 
+        self.ip_consuming_tag = None
+
         self.in_conn = None
         self.out_conn = None
         # Create channels
