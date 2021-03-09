@@ -209,6 +209,9 @@ class queue_CONN:
         self.in_channel = None
         self.out_channel = None
         self.ns_channel = None
+
+        # 
+        self.message_cnt = 0
         return
     def __enter__(self):
         self.setup()
@@ -373,6 +376,9 @@ class queue_CONN:
         # Build in publish limiter
         if (self.enable_namespace) and (self.out_channel is not None) and (self.progress_queue is not None):
             self.publish_message(self.out_channel, self.progress_queue, op_msg)
+        return
+    def iter_message_cnt() -> None:
+        self.message_cnt+=1
         return
 
 # Class for handling DB calls
