@@ -428,9 +428,10 @@ class db_CONN:
         # pAr = self.to_list()
         return res
     def __exit__(self, type, value, traceback):
+        self.flush_dataframe()
         self.close_conn()
         return
-    # Initializers 
+    # Initializers
     def setup(self) -> pyodbc.Connection:
         self.from_env()
         self.ConnectToDb()
@@ -461,11 +462,11 @@ class db_CONN:
     def add_to_buffer(self, rcd_df):
         try:
             if rcd_df is not None:
-            if self._bufffer_df is not None:
-                self._bufffer_df = self._bufffer_df.append(rcd_df, ignore_index=True, sort=False)
-            else:
-                self._bufffer_df = rcd_df
-            self._write_cnt+=1
+                if self._bufffer_df is not None:
+                    self._bufffer_df = self._bufffer_df.append(rcd_df, ignore_index=True, sort=False)
+                else:
+                    self._bufffer_df = rcd_df
+                self._write_cnt+=1
         except Exception as err:
             print(str(err))
             traceback.print_tb(err.__traceback__)
@@ -574,6 +575,11 @@ class db_CONN:
         #return result set
         return rslDF
     # method - Insert query
+    def reset_ingest_buffer(self):
+        self._bufffer_df = None
+        self._write_cnt = 0
+        self._flush_flag = False
+        return
     def write_dataframe (self, InsertQuery, sourceList):
         insertTime = StopWatch()
 
@@ -595,7 +601,6 @@ class db_CONN:
             sqlBase += " VALUES"
             sqlStr = sqlBase
 
-            
             # Generate cursor
             cursor = conn.cursor()
             # Iterate through rows and add to value list
@@ -633,6 +638,8 @@ class db_CONN:
                     conn.commit()
                     sqlStr = sqlBase
             if self.IS_VERBOSE: print("Results written in:",insertTime.timeElapsed())
+        # Reset buffer
+        self.reset_ingest_buffer()
         # Return total number of inserts
         return rowCnt
 # Class for automatic timer
