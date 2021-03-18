@@ -581,64 +581,65 @@ class db_CONN:
         self._write_cnt = 0
         self._flush_flag = False
         return
-    def write_dataframe (self, InsertQuery, sourceList):
+    def write_dataframe (self, InsertQuery, sourceList) -> int:
         insertTime = StopWatch()
 
         # Check if write buffer is reached or flush asked for
         # If False append
         if (self._write_cnt<self.ingest_buffer_size) and (not self._flush_flag):
             self.add_to_buffer(sourceList)
-        else:
-            # write dataframe
-            # Establish a db connection
-            self.ConnectToDb()
-            conn = self.dbConnection
+            return -1
 
-            # Set function scoped variables
-            bufferSize = self.WRITE_BUFFER_LIMIT # Records to insert at a time
-            rowCnt = 0 # Capture total number of records written
-            i = 0 # Record count in current buffer
-            sqlBase = InsertQuery # "INSERT INTO [OBJ].[NARRATIVE_CSC_REF] ([COMMENT_ID],[CLAIM_NUMBER],[EXTRACTED_CSC_REF]) VALUES"
-            sqlBase += " VALUES"
-            sqlStr = sqlBase
+        # write dataframe
+        # Establish a db connection
+        self.ConnectToDb()
+        conn = self.dbConnection
 
-            # Generate cursor
-            cursor = conn.cursor()
-            # Iterate through rows and add to value list
-            for idx,rowLs in sourceList.iterrows():
-                if i == 0:
-                    sqlStr += "\n("
-                else:
-                    sqlStr += "\n,("
-                # 
-                
-                sepStr = ','
-                valStr = sepStr.join('\'' + str(item) + '\'' for item in rowLs) #sepStr.join(rowLs)
-                sqlStr += valStr+')'
+        # Set function scoped variables
+        bufferSize = self.WRITE_BUFFER_LIMIT # Records to insert at a time
+        rowCnt = 0 # Capture total number of records written
+        i = 0 # Record count in current buffer
+        sqlBase = InsertQuery # "INSERT INTO [OBJ].[NARRATIVE_CSC_REF] ([COMMENT_ID],[CLAIM_NUMBER],[EXTRACTED_CSC_REF]) VALUES"
+        sqlBase += " VALUES"
+        sqlStr = sqlBase
 
-                i+=1
-                # Buffer row inserts 
-                rowCnt+=1
-                if (i >= bufferSize) or (rowCnt >= len(sourceList.index)):
-                    # Reset query and counter to base
-                    i = 0
-                    # Insert records to db 
-                    if self.IS_VERBOSE: 
-                        if (i >= bufferSize): print("Buffer reached")
-                        if (rowCnt >= len(sourceList.index)): print("EOD reached")
-                        print("Row index:",rowCnt)
-                    try:
-                        cursor.execute(sqlStr)
-                    except Exception as err:
-                        print()
-                        print("An error occurred while inserting records.")
-                        print(str(err))
-                        print()
-                        print(sqlStr)
-                        traceback.print_tb(err.__traceback__)
-                    conn.commit()
-                    sqlStr = sqlBase
-            if self.IS_VERBOSE: print("Results written in:",insertTime.timeElapsed())
+        # Generate cursor
+        cursor = conn.cursor()
+        # Iterate through rows and add to value list
+        for idx,rowLs in sourceList.iterrows():
+            if i == 0:
+                sqlStr += "\n("
+            else:
+                sqlStr += "\n,("
+            # 
+            
+            sepStr = ','
+            valStr = sepStr.join('\'' + str(item) + '\'' for item in rowLs) #sepStr.join(rowLs)
+            sqlStr += valStr+')'
+
+            i+=1
+            # Buffer row inserts 
+            rowCnt += 1
+            if (i >= bufferSize) or (rowCnt >= len(sourceList.index)):
+                # Reset query and counter to base
+                i = 0
+                # Insert records to db 
+                if self.IS_VERBOSE: 
+                    if (i >= bufferSize): print("Buffer reached")
+                    if (rowCnt >= len(sourceList.index)): print("EOD reached")
+                    print("Row index:",rowCnt)
+                try:
+                    cursor.execute(sqlStr)
+                except Exception as err:
+                    print()
+                    print("An error occurred while inserting records.")
+                    print(str(err))
+                    print()
+                    print(sqlStr)
+                    traceback.print_tb(err.__traceback__)
+                conn.commit()
+                sqlStr = sqlBase
+        if self.IS_VERBOSE: print("Results written in:",insertTime.timeElapsed())
         # Reset buffer
         self.reset_ingest_buffer()
         # Return total number of inserts
