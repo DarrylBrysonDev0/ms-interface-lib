@@ -407,6 +407,12 @@ class db_CONN:
         self._data_tbl = None
         self._db_tbl_name = None
         self._columns = None
+        self.ingest_buffer_size = 1
+        self._write_cnt = 0
+
+        # DF collector
+        self._bufffer_df = None
+
         # self._subsel_col = None
         # Constaints
         self.WRITE_BUFFER_LIMIT = 500
@@ -436,6 +442,8 @@ class db_CONN:
         res_dic['UserName']=self.set_env_param('DB_USER',r'')
         res_dic['Password']=self.set_env_param('DB_PASSWORD',r'')
         self.configData = res_dic
+
+        self.ingest_buffer_size = int(self.set_env_param('DB_INGEST_BUFFER',1))
     # Supporting methods
     def to_list(self) -> list:
         res = list(self.configData.values())
@@ -444,7 +452,25 @@ class db_CONN:
         param = os.getenv(paramName)
         res = defaultStr if not param else param
         return res
-    
+
+    def flush_dataframe(self):
+        self._flush_flag = True
+        self.insert_dataframe()
+        self._flush_flag = False
+        return
+    def add_to_buffer(self, rcd_df):
+        try:
+            if rcd_df is not None:
+            if self._bufffer_df is not None:
+                self._bufffer_df = self._bufffer_df.append(rcd_df, ignore_index=True, sort=False)
+            else:
+                self._bufffer_df = rcd_df
+            self._write_cnt+=1
+        except Exception as err:
+            print(str(err))
+            traceback.print_tb(err.__traceback__)
+        return
+        
     # Dataframe handlers
     def set_df(self, df, db_tbl) -> None:
         self._data_tbl = df
@@ -550,56 +576,63 @@ class db_CONN:
     # method - Insert query
     def write_dataframe (self, InsertQuery, sourceList):
         insertTime = StopWatch()
-        # Establish a db connection
-        self.ConnectToDb()
-        conn = self.dbConnection
 
-        # Set function scoped variables
-        bufferSize = self.WRITE_BUFFER_LIMIT # Records to insert at a time
-        rowCnt = 0 # Capture total number of records written
-        i = 0 # Record count in current buffer
-        sqlBase = InsertQuery # "INSERT INTO [OBJ].[NARRATIVE_CSC_REF] ([COMMENT_ID],[CLAIM_NUMBER],[EXTRACTED_CSC_REF]) VALUES"
-        sqlBase += " VALUES"
-        sqlStr = sqlBase
+        # Check if write buffer is reached or flush asked for
+        # If False append
+        if (self._write_cnt<self.ingest_buffer_size) and (not self._flush_flag):
+            self.add_to_buffer(sourceList)
+        else:
+            # write dataframe
+            # Establish a db connection
+            self.ConnectToDb()
+            conn = self.dbConnection
 
-        
-        # Generate cursor
-        cursor = conn.cursor()
-        # Iterate through rows and add to value list
-        for idx,rowLs in sourceList.iterrows():
-            if i == 0:
-                sqlStr += "\n("
-            else:
-                sqlStr += "\n,("
-            # 
+            # Set function scoped variables
+            bufferSize = self.WRITE_BUFFER_LIMIT # Records to insert at a time
+            rowCnt = 0 # Capture total number of records written
+            i = 0 # Record count in current buffer
+            sqlBase = InsertQuery # "INSERT INTO [OBJ].[NARRATIVE_CSC_REF] ([COMMENT_ID],[CLAIM_NUMBER],[EXTRACTED_CSC_REF]) VALUES"
+            sqlBase += " VALUES"
+            sqlStr = sqlBase
+
             
-            sepStr = ','
-            valStr = sepStr.join('\'' + str(item) + '\'' for item in rowLs) #sepStr.join(rowLs)
-            sqlStr += valStr+')'
+            # Generate cursor
+            cursor = conn.cursor()
+            # Iterate through rows and add to value list
+            for idx,rowLs in sourceList.iterrows():
+                if i == 0:
+                    sqlStr += "\n("
+                else:
+                    sqlStr += "\n,("
+                # 
+                
+                sepStr = ','
+                valStr = sepStr.join('\'' + str(item) + '\'' for item in rowLs) #sepStr.join(rowLs)
+                sqlStr += valStr+')'
 
-            i+=1
-            # Buffer row inserts 
-            rowCnt+=1
-            if (i >= bufferSize) or (rowCnt >= len(sourceList.index)):
-                # Reset query and counter to base
-                i = 0
-                # Insert records to db 
-                if self.IS_VERBOSE: 
-                    if (i >= bufferSize): print("Buffer reached")
-                    if (rowCnt >= len(sourceList.index)): print("EOD reached")
-                    print("Row index:",rowCnt)
-                try:
-                    cursor.execute(sqlStr)
-                except Exception as err:
-                    print()
-                    print("An error occurred while inserting records.")
-                    print(str(err))
-                    print()
-                    print(sqlStr)
-                    traceback.print_tb(err.__traceback__)
-                conn.commit()
-                sqlStr = sqlBase
-        if self.IS_VERBOSE: print("Results written in:",insertTime.timeElapsed())
+                i+=1
+                # Buffer row inserts 
+                rowCnt+=1
+                if (i >= bufferSize) or (rowCnt >= len(sourceList.index)):
+                    # Reset query and counter to base
+                    i = 0
+                    # Insert records to db 
+                    if self.IS_VERBOSE: 
+                        if (i >= bufferSize): print("Buffer reached")
+                        if (rowCnt >= len(sourceList.index)): print("EOD reached")
+                        print("Row index:",rowCnt)
+                    try:
+                        cursor.execute(sqlStr)
+                    except Exception as err:
+                        print()
+                        print("An error occurred while inserting records.")
+                        print(str(err))
+                        print()
+                        print(sqlStr)
+                        traceback.print_tb(err.__traceback__)
+                    conn.commit()
+                    sqlStr = sqlBase
+            if self.IS_VERBOSE: print("Results written in:",insertTime.timeElapsed())
         # Return total number of inserts
         return rowCnt
 # Class for automatic timer
