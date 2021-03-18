@@ -585,11 +585,14 @@ class db_CONN:
         insertTime = StopWatch()
 
         # Check if write buffer is reached or flush asked for
-        # If False append
+        # Append latest record
+        self.add_to_buffer(sourceList)
+        # If write buffer is not reached or flush asked for then exit
         if (self._write_cnt<self.ingest_buffer_size) and (not self._flush_flag):
-            self.add_to_buffer(sourceList)
+            # self.add_to_buffer(sourceList)
             return -1
-
+        # Re-Set source to buffer df
+        sourceList = self._bufffer_df
         # write dataframe
         # Establish a db connection
         self.ConnectToDb()
