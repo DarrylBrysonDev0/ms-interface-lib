@@ -407,11 +407,12 @@ class db_CONN:
         self._data_tbl = None
         self._db_tbl_name = None
         self._columns = None
-        self.ingest_buffer_size = 1
-        self._write_cnt = 0
 
         # DF collector
         self._bufffer_df = None
+        self.ingest_buffer_size = 1
+        self._write_cnt = 0
+        self._flush_flag = False
 
         # self._subsel_col = None
         # Constaints
