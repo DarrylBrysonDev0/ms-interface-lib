@@ -238,8 +238,8 @@ class queue_CONN:
         default_ns = str(uuid.uuid4().hex)
         self.rbt_srv = self.set_env_param('RABBIT_SRV',r'rabbit-queue')
         self.queue_namespace = self.set_env_param('NAMESPACE',default_ns)
-        self.src_queue = self.set_env_param('INPUT_QUEUE',r'new_files')
-        self.dest_queue = self.set_env_param('OUTPUT_QUEUE',r'processed_files')
+        self.src_queue = self.set_env_param('INPUT_QUEUE','_'.join(['ip_que',default_ns]))
+        self.dest_queue = self.set_env_param('OUTPUT_QUEUE','_'.join(['op_que',default_ns]))
         self.enable_namespace = bool(int(self.set_env_param('ENABLE_NAMESPACE_QUEUE',r'0')))
         self.pub_limit = int(self.set_env_param('PUBLISHING_LIMIT','20'))
         return
