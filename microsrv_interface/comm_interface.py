@@ -152,7 +152,7 @@ class sftp_CONN:
             rp = str(remotePath)
             locPath = str(locPath)
             rDir = pathlib.Path(rp).parent
-            self.create_directory(rDir)
+            self.create_directory(str(rDir))
             # Copy files remotely
             sftp.put(locPath,rp)
             res = rp
