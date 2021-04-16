@@ -114,7 +114,7 @@ class sftp_CONN:
             # top-level relative directory must exist
             return
         try:
-            sftp.chdir(remote_directory) # sub-directory exists
+            sftp.chdir(str(remote_directory)) # sub-directory exists
         except IOError:
             dirname, basename = os.path.split(remote_directory.rstrip('/'))
             self.create_directory(dirname) # make parent directories
