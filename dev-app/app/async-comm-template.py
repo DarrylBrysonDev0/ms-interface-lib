@@ -48,17 +48,9 @@ def file_name_publisher():
         traceback.print_tb(err.__traceback__)
     return
 def file_name_consumer():
-    # # Set sftp interface
-    # sftp_interface = sftp_CONN()
     # Set queue interface
     rbt_interface = queue_CONN()
-
-    # source_queue = set_env_param('COMM_QUEUE','file_list')
     try:
-        # Connect to SFTP server
-        # print(' [*] Connecting to SFTP server')
-        # with sftp_interface as sftp:
-        #     print(' [+] Connected to SFTP server')
         # Connect to RabbitMQ server
         print(' [*] Connecting to RabbitMQ server')
         with rbt_interface as rbt_params:

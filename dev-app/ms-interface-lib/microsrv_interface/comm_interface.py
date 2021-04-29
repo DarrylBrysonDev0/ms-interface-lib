@@ -284,9 +284,11 @@ class queue_CONN:
             return
         if exch_name != '':
             # Set exchange base queue
-            # result = chObj.queue_declare(queue='', exclusive=True)
-            # t_qn = result.method.queue
-            chObj.queue_declare(queue=queue_name, durable=True)
+            if queue_name == '':
+                result = chObj.queue_declare(queue='', exclusive=True)
+                queue_name = result.method.queue
+            else:
+                chObj.queue_declare(queue=queue_name, durable=True)
             chObj.queue_bind(exchange=exch_name, queue=queue_name, routing_key=queue_name)
         else:
             # Set direct queue w/ default exchange
