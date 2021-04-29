@@ -204,6 +204,8 @@ class queue_CONN:
 
         self.rbt_srv = None
         self.queue_namespace = None
+        self.src_exchange = None
+        self.dest_exchange = None
         self.src_queue = None
         self.dest_queue = None
         self.enable_namespace = None
@@ -244,8 +246,14 @@ class queue_CONN:
         default_ns = str(uuid.uuid4().hex)
         self.rbt_srv = self.set_env_param('RABBIT_SRV',r'rabbit-queue')
         self.queue_namespace = self.set_env_param('NAMESPACE',default_ns)
-        self.src_queue = self.set_env_param('INPUT_QUEUE','_'.join(['ip_que',default_ns]))
-        self.dest_queue = self.set_env_param('OUTPUT_QUEUE','_'.join(['op_que',default_ns]))
+        self.src_exchange = self.set_env_param('INPUT_EXCHANGE','')
+        self.dest_exchange = self.set_env_param('OUTPUT_EXCHANGE','')
+        self.src_exchange_type = self.set_env_param('INPUT_EXCHANGE_TYPE','')
+        self.dest_exchange_type = self.set_env_param('OUTPUT_EXCHANGE_TYPE','')
+        self.src_queue = self.set_env_param('INPUT_QUEUE','')
+        self.dest_queue = self.set_env_param('OUTPUT_QUEUE','')
+        # self.src_queue = self.set_env_param('INPUT_QUEUE','_'.join(['ip_que',self.queue_namespace]))
+        # self.dest_queue = self.set_env_param('OUTPUT_QUEUE','_'.join(['op_que',self.queue_namespace]))
         self.enable_namespace = bool(int(self.set_env_param('ENABLE_NAMESPACE_QUEUE',r'0')))
         self.pub_limit = int(self.set_env_param('PUBLISHING_LIMIT','20'))
         return
@@ -266,6 +274,24 @@ class queue_CONN:
         self._input_func = input_func
         return
     # Channel Managment
+    # Create Exchange
+    def create_exchange(self, chObj, exch_name: str, exch_type: str) -> None:
+        if exch_name != '' and exch_type != '': 
+            chObj.exchange_declare(exchange=exch_name, exchange_type=exch_type)
+        return
+    def create_queue(self,chObj,exch_name,queue_name):
+        if queue_name == '':
+            return
+        if exch_name != '':
+            # Set exchange base queue
+            # result = chObj.queue_declare(queue='', exclusive=True)
+            # t_qn = result.method.queue
+            chObj.queue_declare(queue=queue_name, durable=True)
+            chObj.queue_bind(exchange=exch_name, queue=queue_name, routing_key=queue_name)
+        else:
+            # Set direct queue w/ default exchange
+            chObj.queue_declare(queue=queue_name, durable=True)
+        return
     ## Named channels
     ### Create channels
     def create_namespace_queues(self, chObj, nsStr: str) -> None:
@@ -277,21 +303,58 @@ class queue_CONN:
         chObj.queue_declare(queue=self.progress_queue, durable=True)
         return
     def create_named_channel_queues(self) -> None:
-        # Create connections
-        self.in_conn = self.open_Connection()
-        self.out_conn = self.open_Connection()
-        # Create channels
-        self.in_channel = self.open_channel(self.in_conn)
-        self.out_channel = self.open_channel(self.out_conn)
-        self.ns_channel = self.open_channel(self.out_conn)
-        # Create queues
-        self.in_channel.queue_declare(queue=self.src_queue, durable=True)
-        self.out_channel.queue_declare(queue=self.dest_queue, durable=True)
+        self.set_inputs()
+        self.set_outputs()
+        # # Create connections
+        # self.in_conn = self.open_Connection()
+        # self.out_conn = self.open_Connection()
+        # # Create channels
+        # self.in_channel = self.open_channel(self.in_conn)
+        # self.out_channel = self.open_channel(self.out_conn)
+        # self.ns_channel = self.open_channel(self.out_conn)
+        # # Create queues
+        # self.in_channel.queue_declare(queue=self.src_queue, durable=True)
+        # self.out_channel.queue_declare(queue=self.dest_queue, durable=True)
 
-        if self.enable_namespace:
-            ## Create namespace based queues
-            self.create_namespace_queues(self.ns_channel, self.queue_namespace)
+        # if self.enable_namespace:
+        #     ## Create namespace based queues
+        #     self.create_namespace_queues(self.ns_channel, self.queue_namespace)
         return
+    def set_inputs(self) -> None:
+        try:
+            # Create connections
+            self.in_conn = self.open_Connection()
+            # Create channels
+            self.in_channel = self.open_channel(self.in_conn)
+            # Create Exchange
+            self.create_exchange(self.in_channel,self.src_exchange,self.src_exchange_type)
+            # Create Input Queue
+            self.create_queue(self.in_channel,self.src_exchange,self.src_queue)
+        except Exception as err:
+            print()
+            print(" [!] Error setting inputs.")
+            print(str(err))
+            traceback.print_tb(err.__traceback__)
+            raise
+        return
+    def set_outputs(self) -> None:
+        try:
+            # Create connections
+            self.out_conn = self.open_Connection()
+            # Create channels
+            self.out_channel = self.open_channel(self.out_conn)
+            # Create Exchange
+            self.create_exchange(self.out_channel,self.dest_exchange,self.dest_exchange_type)
+            # Create Input Queue
+            self.create_queue(self.out_channel,self.dest_exchange,self.dest_queue)
+        except Exception as err:
+            print()
+            print(" [!] Error setting outputs.")
+            print(str(err))
+            traceback.print_tb(err.__traceback__)
+            raise
+        return
+    
     ### Start/Stop Input channel
     def start_input_stream(self) -> None:
         print(' [*] Starting input stream')
@@ -309,14 +372,14 @@ class queue_CONN:
     def write_output(self, op_msg: str) -> None:
         # Build in publish limiter
         if (self.out_channel is not None) and (self.dest_queue is not None):
-            self.publish_message(self.out_channel, self.dest_queue,op_msg)
+            self.publish_message(self.out_channel, self.dest_queue,op_msg,self.dest_exchange)
         return
     ## General channels
     ### Publish message to queue
-    def publish_message(self, channel, queueName: str, op_msg: str) -> None:
+    def publish_message(self, channel, queueName, op_msg, exch_name='') -> None:
         try:
             # Build in publish limiter
-            channel.basic_publish(exchange='',
+            channel.basic_publish(exchange=exch_name,
                             routing_key=queueName,
                             body=op_msg)
         except Exception as err:

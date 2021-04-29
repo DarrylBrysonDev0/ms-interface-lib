@@ -30,9 +30,11 @@ WORKDIR /ims-lib
 # RUN git clone https://github.com/DarrylBrysonDev0/ms-interface-lib.git && \
 #     python -m pip install -r ./ms-interface-lib/requirements.txt && \
 #     python -m pip install ./ms-interface-lib
-COPY ./ms-interface-lib /ims-lib
-RUN python -m pip install -r ./ms-interface-lib/requirements.txt && \
-    python -m pip install ./ms-interface-lib
+COPY ./ms-interface-lib/requirements.txt /ims-lib/ms-interface-lib/requirements.txt
+RUN python -m pip install -r ./ms-interface-lib/requirements.txt
+
+COPY ./ms-interface-lib /ims-lib/ms-interface-lib
+RUN python -m pip install ./ms-interface-lib
 
 # Install application requirements
 COPY app/requirements.txt .

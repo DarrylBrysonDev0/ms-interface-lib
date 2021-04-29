@@ -1,34 +1,50 @@
 version: '3.4'
 
 services:
-  py-app-loop:
-    image: python-app-loop
+  example-publisher:
+    image: async-comm-template
     build:
       context: .
       dockerfile: ./Dockerfile
     command: ["python", "async-comm-template.py", "-t", "publish"]
     environment:
       # SFTP Parameters
-      - SFTP_HOST=sftp-srv
+      - SFTP_HOST=${SFTP_HOST_ADDRESS}
       - SFTP_PORT=22
-      - SFTP_USR=admin
-      - SFTP_PWD=devpwd
+      - SFTP_USR=${SFTP_USER}
+      - SFTP_PWD=${SFTP_PASSWORD}
       # Communication queue parameters
-      - RABBIT_SRV=rabbit-queue
-      - NAMESPACE=python_app_loop
-      - INPUT_QUEUE=
-      - OUTPUT_QUEUE=
-
-      - COMM_QUEUE=file_list
+      - RABBIT_SRV=${RABBITMQ_HOST_ADDRESS}
+      - NAMESPACE=async_comm_template_example_publisher
+      - OUTPUT_EXCHANGE=file_list
+      - OUTPUT_EXCHANGE_TYPE=fanout
+      - OUTPUT_QUEUE=${FILE_LIST_QUEUE}
       # Behavior parameters
       - PUBLISHING_LIMIT=200
       - FREQUENCY_SEC=300
       - ENABLE_NAMESPACE_QUEUE=0
       # File Access
-      - SOURCE_PATH=/src
-      - DEST_PATH=
-      #- SECONDARY_PATHS=/dir1
+      - SOURCE_PATH=${SOURCE_DIRECTORY}
     # restart: unless-stopped # un-comment to enable loop
+    networks:
+      - microservice-network
+      
+  example-consumer:
+    image: async-comm-template
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    command: ["python", "async-comm-template.py", "-t", "consume"]
+    environment:
+      # Communication queue parameters
+      - RABBIT_SRV=${RABBITMQ_HOST_ADDRESS}
+      - NAMESPACE=async_comm_template_example_consumer
+      - INPUT_EXCHANGE=file_list
+      - INPUT_EXCHANGE_TYPE=fanout
+      - INPUT_QUEUE=${FILE_LIST_QUEUE}
+      # Behavior parameters
+      - FREQUENCY_SEC=300
+      - ENABLE_NAMESPACE_QUEUE=0
     networks:
       - microservice-network
   
