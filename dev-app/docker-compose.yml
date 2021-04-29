@@ -1,0 +1,71 @@
+version: '3.4'
+
+services:
+  example-publisher:
+    image: async-comm-template
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    command: ["python", "async-comm-template.py", "-t", "publish"]
+    environment:
+      # SFTP Parameters
+      - SFTP_HOST=${SFTP_HOST_ADDRESS}
+      - SFTP_PORT=22
+      - SFTP_USR=${SFTP_USER}
+      - SFTP_PWD=${SFTP_PASSWORD}
+      # Communication queue parameters
+      - RABBIT_SRV=${RABBITMQ_HOST_ADDRESS}
+      - NAMESPACE=async_comm_template_example_publisher
+      - OUTPUT_EXCHANGE=file_list
+      - OUTPUT_EXCHANGE_TYPE=fanout
+      - OUTPUT_QUEUE=${FILE_LIST_QUEUE}
+      # Behavior parameters
+      - PUBLISHING_LIMIT=200
+      - FREQUENCY_SEC=300
+      - ENABLE_NAMESPACE_QUEUE=0
+      # File Access
+      - SOURCE_PATH=${SOURCE_DIRECTORY}
+    # restart: unless-stopped # un-comment to enable loop
+    networks:
+      - microservice-network
+      
+  example-consumer-1:
+    image: async-comm-template
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    command: ["python", "async-comm-template.py", "-t", "consume"]
+    environment:
+      # Communication queue parameters
+      - RABBIT_SRV=${RABBITMQ_HOST_ADDRESS}
+      - NAMESPACE=async_comm_template_example_consumer
+      - INPUT_EXCHANGE=file_list
+      - INPUT_EXCHANGE_TYPE=fanout
+      - INPUT_QUEUE=${FILE_LIST_QUEUE}_con_1
+      # Behavior parameters
+      - FREQUENCY_SEC=300
+      - ENABLE_NAMESPACE_QUEUE=0
+    networks:
+      - microservice-network    
+  example-consumer-2:
+    image: async-comm-template
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    command: ["python", "async-comm-template.py", "-t", "consume"]
+    environment:
+      # Communication queue parameters
+      - RABBIT_SRV=${RABBITMQ_HOST_ADDRESS}
+      - NAMESPACE=async_comm_template_example_consumer
+      - INPUT_EXCHANGE=file_list
+      - INPUT_EXCHANGE_TYPE=fanout
+      - INPUT_QUEUE=${FILE_LIST_QUEUE}_con_2
+      # Behavior parameters
+      - FREQUENCY_SEC=300
+      - ENABLE_NAMESPACE_QUEUE=0
+    networks:
+      - microservice-network
+  
+networks:
+  microservice-network:
+    external: true

@@ -1,0 +1,11 @@
+[build-system]
+requires = [
+    "setuptools>=42",
+    "wheel",
+    "pysftp>=0.2.9",
+    "pika>=1.1.0",
+    "path>=14.0.1",
+    "pyodbc>=4.0.30",
+    "pandas>=1.2.1"
+]
+build-backend = "setuptools.build_meta"
