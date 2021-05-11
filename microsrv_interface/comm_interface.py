@@ -578,6 +578,7 @@ class db_CONN:
     def insert_dataframe(self) -> int:
         # Norm column list
         self._columns = self.get_df_columns()
+        wrt_cnt = None
         if self._data_tbl is not None:
             # Build insert query
             ins_str = 'INSERT INTO ' + self._db_tbl_name + ' '
