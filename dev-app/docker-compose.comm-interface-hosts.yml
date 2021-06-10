@@ -1,0 +1,27 @@
+version: '3.4'
+
+services:
+  sftp-srv:
+    image: atmoz/sftp
+    volumes:
+        - ${SFTP_APP_SRC_DATA_DIR}:/home/admin/app_root
+    ports:
+        - "2222:22"
+    networks:
+      - microservice-network
+    command: ${SFTP_USER}:${SFTP_PASSWORD}:1001
+  
+  rabbit-queue:
+    image: rabbitmq:3-management
+    hostname: rabbit-1
+    environment:
+      - RABBITMQ_ERLANG_COOKIE='LabKey_Link_k1'
+    ports:
+      - '8081:15672'
+      - '5672:5672'
+    networks:
+      - microservice-network
+
+networks:
+  microservice-network:
+    external: true
