@@ -120,7 +120,7 @@ class sftp_CONN:
             # top-level relative directory must exist
             return
         try:
-            sftp.chdir(remote_directory) # sub-directory exists
+            sftp.chdir(str(remote_directory)) # sub-directory exists
         except IOError:
             dirname, basename = os.path.split(remote_directory.rstrip('/'))
             self.create_directory(dirname) # make parent directories
@@ -158,7 +158,7 @@ class sftp_CONN:
             rp = str(remotePath)
             locPath = str(locPath)
             rDir = pathlib.Path(rp).parent
-            self.create_directory(rDir)
+            self.create_directory(str(rDir))
             # Copy files remotely
             sftp.put(locPath,rp)
             res = rp
@@ -578,6 +578,7 @@ class db_CONN:
     def insert_dataframe(self) -> int:
         # Norm column list
         self._columns = self.get_df_columns()
+        wrt_cnt = None
         if self._data_tbl is not None:
             # Build insert query
             ins_str = 'INSERT INTO ' + self._db_tbl_name + ' '
