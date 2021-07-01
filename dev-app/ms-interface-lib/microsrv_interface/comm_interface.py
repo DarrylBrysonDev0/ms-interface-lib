@@ -364,6 +364,8 @@ class queue_CONN:
         # if self._isAttribSet(self.in_channel) and self._isAttribSet(self._input_func):
             self.ip_consuming_tag = self.start_consuming(self.in_channel, self.src_queue, self._input_func)
             print(' [+] Input stream started with consumer_tag {0}'.format(str(self.ip_consuming_tag)))
+        else:
+            print(' [!] Input channel is not set')
         return
     def stop_input_stream(self) -> None:
         if (self.in_channel is not None) and (self.ip_consuming_tag is not None):
@@ -396,6 +398,8 @@ class queue_CONN:
         if (channel is not None) and (queueName is not None) and (func is not None):
             ctag = self.in_channel.basic_consume(self.src_queue, self._input_func)
             channel.start_consuming()
+        else:
+            print(' [!] Channel not set')
         return ctag
     def stop_consuming(self, ch, ch_tag) -> None:
         ch.basic_cancel(ch_tag)
