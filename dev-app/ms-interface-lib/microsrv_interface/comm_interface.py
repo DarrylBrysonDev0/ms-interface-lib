@@ -374,6 +374,7 @@ class queue_CONN:
     def write_output(self, op_msg: str) -> None:
         # Build in publish limiter
         if (self.out_channel is not None) and (self.dest_queue is not None):
+            if not self.out_channel.is_open: self.set_outputs()
             self.publish_message(self.out_channel, self.dest_queue,op_msg,self.dest_exchange)
         return
     ## General channels
