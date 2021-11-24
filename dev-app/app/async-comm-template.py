@@ -38,7 +38,7 @@ def file_name_publisher():
                 for file_name in file_list:
                     rbt_interface.write_output(file_name)
                     pub_cnt+=1
-                    if pub_cnt>= rbt_interface.pub_limit:
+                    if pub_cnt>= rbt_interface.pub_limit and rbt_interface.pub_limit>0:
                         break
                 print(' [+] File paths published: {0}'.format(pub_cnt))
     except Exception as err:

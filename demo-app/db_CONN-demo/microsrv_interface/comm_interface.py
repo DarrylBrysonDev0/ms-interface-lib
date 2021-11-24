@@ -1,4 +1,4 @@
- import os
+import os
 import pysftp
 import traceback
 import time
@@ -500,7 +500,7 @@ class db_CONN:
         # pAr = self.to_list()
         return res
     def __exit__(self, type, value, traceback):
-        self.flush_dataframe()
+        #self.flush_dataframe()
         self.close_conn()
         return
     # Initializers
@@ -654,15 +654,16 @@ class db_CONN:
         self._flush_flag = False
         return
     def write_dataframe (self, InsertQuery, sourceList) -> int:
+        print(' [*] Starting db write')
         insertTime = StopWatch()
 
         # Check if write buffer is reached or flush asked for
         # Append latest record
         self.add_to_buffer(sourceList)
         # If write buffer is not reached or flush asked for then exit
-        if (self._write_cnt<self.ingest_buffer_size) and (not self._flush_flag):
-            # self.add_to_buffer(sourceList)
-            return -1
+        #if (self._write_cnt<self.ingest_buffer_size) and (not self._flush_flag):
+        #    # self.add_to_buffer(sourceList)
+        #    return -1
         # Re-Set source to buffer df
         sourceList = self._bufffer_df
         # write dataframe
@@ -671,7 +672,7 @@ class db_CONN:
         conn = self.dbConnection
 
         # Set function scoped variables
-        bufferSize = self.WRITE_BUFFER_LIMIT # Records to insert at a time
+        bufferSize = self.ingest_buffer_size # Records to insert at a time
         rowCnt = 0 # Capture total number of records written
         i = 0 # Record count in current buffer
         sqlBase = InsertQuery # "INSERT INTO [OBJ].[NARRATIVE_CSC_REF] ([COMMENT_ID],[CLAIM_NUMBER],[EXTRACTED_CSC_REF]) VALUES"
@@ -681,6 +682,7 @@ class db_CONN:
         # Generate cursor
         cursor = conn.cursor()
         # Iterate through rows and add to value list
+        #print(str(bufferSize))
         for idx,rowLs in sourceList.iterrows():
             if i == 0:
                 sqlStr += "\n("
@@ -696,13 +698,11 @@ class db_CONN:
             # Buffer row inserts 
             rowCnt += 1
             if (i >= bufferSize) or (rowCnt >= len(sourceList.index)):
-                # Reset query and counter to base
-                i = 0
                 # Insert records to db 
                 if self.IS_VERBOSE: 
-                    if (i >= bufferSize): print("Buffer reached")
-                    if (rowCnt >= len(sourceList.index)): print("EOD reached")
-                    print("Row index:",rowCnt)
+                    if (i >= bufferSize): print(" [+] Buffer reached")
+                    if (rowCnt >= len(sourceList.index)): print(" [*] EOD reached")
+                    print(" [I] Row index:",rowCnt)
                 try:
                     cursor.execute(sqlStr)
                 except Exception as err:
@@ -714,6 +714,8 @@ class db_CONN:
                     traceback.print_tb(err.__traceback__)
                 conn.commit()
                 sqlStr = sqlBase
+                # Reset query and counter to base
+                i = 0
         if self.IS_VERBOSE: print("Results written in:",insertTime.timeElapsed())
         # Reset buffer
         self.reset_ingest_buffer()

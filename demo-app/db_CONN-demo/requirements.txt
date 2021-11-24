@@ -1,0 +1,6 @@
+# To ensure app dependencies are ported from your virtual environment/host machine into your container, run 'pip freeze > requirements.txt' in the terminal to overwrite this file
+pysftp==0.2.9
+pika==1.1.0
+path==14.0.1
+pyodbc==4.0.30
+pandas==1.2.1
